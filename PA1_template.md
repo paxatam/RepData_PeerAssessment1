@@ -9,12 +9,7 @@ It is now possible to collect a large amount of data about personal movement usi
 
 In this document we will study a data which consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(plyr)
-library(dplyr)
-library(lubridate)
-```
+
 
 ## Question 1
 ### Reading the data
@@ -22,7 +17,8 @@ library(lubridate)
 We've pulled repository containing the data from GITHub.
 Let's read it!
 
-```{r}
+
+```r
 activity_data <- read.csv("activity.csv",header = TRUE)
 ```
 
@@ -32,56 +28,42 @@ activity_data <- read.csv("activity.csv",header = TRUE)
 
 How many steps are taken per each day. We will use tapply functions to calculate total number of steps per each of 61 days presented in the data.
 
-```{r}
+
+```r
 num_steps_per_day <- with(activity_data, tapply(steps, date, sum, na.rm = TRUE))
 head(num_steps_per_day)
 ```
 
+```
+## 2012-10-01 2012-10-02 2012-10-03 2012-10-04 2012-10-05 2012-10-06 
+##          0        126      11352      12116      13294      15420
+```
+
 Let's plot a histogram to better understand data:
 
-```{r, echo=FALSE}
-hist(num_steps_per_day, main="Histogram of Steps per day", 
-    xlab="Number of steps", 
-    border="black", 
-    col="grey",
-    breaks=10)
-    
-    abline(v=median(num_steps_per_day), col = "green")
-    abline(v=mean(num_steps_per_day), col = "red")
-```
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
 
 Vertical green line is a median value of histogram and red line is a mean value.
 
-```{r, echo=FALSE}
-num_steps_median <- median(num_steps_per_day)
-num_steps_mean <- mean(num_steps_per_day)
-```
 
-Median value is `r num_steps_median` and mean value is `r round(num_steps_mean)`.
+
+Median value is 10395 and mean value is 9354.
 
 ## Question 3
 ### Average daily activity pattern
 
 What about average number of steps taken within each 5-minutes interval? Factorizing interval column would help us calculate mean value.
-```{r}
+
+```r
 activity_data$interval <- factor(activity_data$interval)
 num_steps_interval_mean <- with(activity_data, tapply(steps, interval, mean, na.rm = TRUE))
 ```
 
 
 Output plot:
-```{r, echo=FALSE}
-plot(num_steps_interval_mean, main="Average number of steps per interval", 
-    xlab = "Number of 5_minutes interval",
-    ylab = "Number of steps",
-    col="black",
-    type = "l")
-
-max_steps_interval <- which.max(num_steps_interval_mean)
-max_steps_interval <- unname(max_steps_interval)
-```
-On average maximum steps are taken in interval number `r max_steps_interval` which corresponds to time interval
-`r max_steps_interval*5` - `r max_steps_interval*5 - 5` minutes.
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
+On average maximum steps are taken in interval number 104 which corresponds to time interval
+520 - 515 minutes.
 
 ## Question 4
 ### Imputing missing values
@@ -91,13 +73,19 @@ For this research we choose to replace NA's by average number of steps calculate
 
 How many NA's there are in dataset?
 
-```{r}
+
+```r
 sum(is.na(activity_data$steps))
+```
+
+```
+## [1] 2304
 ```
 
 To replace NA's accordingly we introduce function fix_NAs and apply it to dataset using mapply function.
 Here is the function:
-```{r}
+
+```r
 fix_NAs <- function(x,y){
     if (is.na(x)) {
         return(num_steps_interval_mean[y])
@@ -109,7 +97,8 @@ fix_NAs <- function(x,y){
 ```
 
 Applying mapply and assigning result to a new dataset:
-```{r}
+
+```r
 fixed_activity_data <- activity_data
 fixed <- mapply(fix_NAs,as.numeric(activity_data$steps),as.numeric(activity_data$interval))
 fixed_activity_data$steps <- fixed
@@ -120,41 +109,16 @@ Does this fix changed mean and median values of number of steps taken each day?
 
 
 Before fixing the data.
-```{r, echo=FALSE}
-hist(num_steps_per_day, main="Histogram of Steps per day", 
-    xlab="Number of steps", 
-    border="black", 
-    col="grey",
-    breaks=10)
-    
-    abline(v=median(num_steps_per_day), col = "green")
-    abline(v=mean(num_steps_per_day), col = "red")
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
 
-```
 
-```{r, echo=FALSE}
-fixed_num_steps_per_day <- with(activity_data, tapply(steps, date, sum, na.rm = TRUE))
-```
 
 After fixing the data.
-```{r, echo=FALSE}
-
-hist(fixed_num_steps_per_day, main="Histogram of Steps per day (fixed data)", 
-    xlab="Number of steps", 
-    border="black", 
-    col="grey",
-    breaks=10)
-    
-    abline(v=median(fixed_num_steps_per_day), col = "green")
-    abline(v=mean(fixed_num_steps_per_day), col = "red")
-    fixed_num_steps_median <- median(fixed_num_steps_per_day)
-    fixed_num_steps_mean <- mean(fixed_num_steps_per_day)
-         
-```
+![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png)
 
 Vertical green line is a median value of histogram and red line is a mean value.
 
-Median value is `r fixed_num_steps_median` and mean value is `r round(fixed_num_steps_mean)`.
+Median value is 10395 and mean value is 9354.
 
 Imputing NA's changed the median and the mean.
 
@@ -164,7 +128,8 @@ Imputing NA's changed the median and the mean.
 To study difference in activity between weekdays and weekends let's introduce wfactor - a factor of 2 levels:
 "weekday" and "weekend"
 
-```{r}
+
+```r
 activity_data$wfactor <- factor(wday(ymd(activity_data$date)))
 activity_data$wfactor <- revalue(activity_data$wfactor, c("1" = "weekend", "7" = "weekend", "2" = "weekday", "3" = "weekday", 
                                  "4" = "weekday", "5" = "weekday", "6" = "weekday"))
@@ -172,7 +137,8 @@ activity_data$wfactor <- revalue(activity_data$wfactor, c("1" = "weekend", "7" =
 
 Let's split dataset by this factor and calculate average daily activity pattern for each factor.
 
-```{r}
+
+```r
 weekend_data <- filter(activity_data, wfactor == "weekend")
 weekend_steps_interval_mean <- with(weekend_data, tapply(steps, interval, mean, na.rm = TRUE))
 
@@ -180,21 +146,7 @@ weekday_data <- filter(activity_data, wfactor == "weekday")
 weekday_steps_interval_mean <- with(weekday_data, tapply(steps, interval, mean, na.rm = TRUE))
 ```
 
-```{r, echo =FALSE}
-par(mfrow = c (2,1))
-
-plot(weekday_steps_interval_mean, main="Average number of steps per interval (weekdays)", 
-     xlab = "Number of 5_minutes interval",
-     ylab = "Number of steps",
-     col="black",
-     type = "l")
-
-plot(weekend_steps_interval_mean, main="Average number of steps per interval (weekends)", 
-     xlab = "Number of 5_minutes interval",
-     ylab = "Number of steps",
-     col="black",
-     type = "l")
-```
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
 
 Not a surprise we see higher activity if weekdays. Possibly this individual has an office job.
 We also see that activity in weekends starts later in comparison to weekdays.
